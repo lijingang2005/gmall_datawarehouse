@@ -1,0 +1,52 @@
+{
+    "job": {
+        "content": [
+            {
+                "reader": {
+                    "name": "mysqlreader",
+                    "parameter": {
+                        "connection": [
+                            {
+                                "jdbcUrl": [
+                                    "jdbc:mysql://<MYSQL_HOST>:3306/gmall?useUnicode=true&allowPublicKeyRetrieval=true&characterEncoding=utf-8"
+                                ],
+                                "querySql": [
+                                    "select id, name, region_id, area_code, iso_code, iso_3166_2, create_time, operate_time from base_province where 1=1"
+                                ]
+                            }
+                        ],
+                        "password": "<MYSQL_PASSWORD>",
+                        "username": "root"
+                    }
+                },
+                "writer": {
+                    "name": "hdfswriter",
+                    "parameter": {
+                        "column": [
+                            { "name": "id", "type": "bigint" },
+                            { "name": "name", "type": "string" },
+                            { "name": "region_id", "type": "string" },
+                            { "name": "area_code", "type": "string" },
+                            { "name": "iso_code", "type": "string" },
+                            { "name": "iso_3166_2", "type": "string" },
+                            { "name": "create_time", "type": "string" },
+                            { "name": "operate_time", "type": "string" }
+                        ],
+                        "compress": "gzip",
+                        "defaultFS": "hdfs://<NAMENODE_HOST>:8020",
+                        "fieldDelimiter": "\t",
+                        "fileName": "base_province",
+                        "fileType": "text",
+                        "path": "/origin_data/gmall/db/base_province_full/${dt}",
+                        "writeMode": "append"
+                    }
+                }
+            }
+        ],
+        "setting": {
+            "speed": {
+                "channel": 1
+            }
+        }
+    }
+}

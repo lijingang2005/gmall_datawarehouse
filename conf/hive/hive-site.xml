@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+    Hive 配置文件
+    用途：Hive on Spark 数据仓库配置
+    部署节点：hadoop102
+-->
+<configuration>
+
+    <!-- ==================== 元数据连接配置 ==================== -->
+    <!-- 元数据库连接 URL -->
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:mysql://&lt;MYSQL_HOST&gt;:3306/metastore?useSSL=false&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true</value>
+    </property>
+
+    <!-- 元数据库驱动 -->
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>com.mysql.cj.jdbc.Driver</value>
+    </property>
+
+    <!-- 元数据库用户名 -->
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>root</value>
+    </property>
+
+    <!-- 元数据库密码（已脱敏） -->
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>&lt;MYSQL_PASSWORD&gt;</value>
+    </property>
+
+    <!-- ==================== 数据仓库目录 ==================== -->
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>/user/hive/warehouse</value>
+    </property>
+
+    <!-- ==================== HiveServer2 配置 ==================== -->
+    <property>
+        <name>hive.server2.thrift.port</name>
+        <value>10000</value>
+    </property>
+
+    <property>
+        <name>hive.server2.thrift.bind.host</name>
+        <value>&lt;HIVE_HOST&gt;</value>
+    </property>
+
+    <!-- ==================== 客户端配置 ==================== -->
+    <!-- 打印列名 -->
+    <property>
+        <name>hive.cli.print.header</name>
+        <value>true</value>
+    </property>
+
+    <!-- 打印当前数据库名 -->
+    <property>
+        <name>hive.cli.print.current.db</name>
+        <value>true</value>
+    </property>
+
+    <!-- ==================== Metastore 服务配置 ==================== -->
+    <!-- 指定 Metastore 服务地址（独立部署） -->
+    <property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://&lt;HIVE_HOST&gt;:9083</value>
+    </property>
+
+    <!-- ==================== Hive on Spark 配置 ==================== -->
+    <!-- 执行引擎切换为 Spark -->
+    <property>
+        <name>hive.execution.engine</name>
+        <value>spark</value>
+    </property>
+
+    <!-- Spark 依赖包路径（HDFS） -->
+    <property>
+        <name>spark.yarn.jars</name>
+        <value>hdfs://&lt;NAMENODE_HOST&gt;:8020/spark-jars/*</value>
+    </property>
+
+</configuration>

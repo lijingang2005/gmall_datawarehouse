@@ -1,0 +1,11 @@
+# 图片资源目录
+
+# 请在此目录放置以下图片文件（建议使用 PNG 格式）：
+
+# architecture.png    - 系统整体架构图
+# data-flow.png       - 数据流转全流程图
+# warehouse-layer.png - 数据仓库分层架构图
+# star-schema.png     - 星型模型 / 维度建模示意图
+# scheduler.png       - DolphinScheduler 工作流 DAG 图
+
+# 这些图片将自动在 README.md 中渲染显示。
