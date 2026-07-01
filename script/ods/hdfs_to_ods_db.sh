@@ -1,119 +1,27 @@
 #!/bin/bash
+# ===================================================
+# ODS 层装载脚本：业务数据 HDFS → ODS
+# 用途：将 HDFS 上的业务原始数据 LOAD 到 Hive ODS 层
+# 参数: $1 - 日期（可选，默认 T-1）
+# 使用示例: bash hdfs_to_ods_db.sh 2022-06-08
+# ===================================================
 
-APP=gmall
+set -e
 
-if [ -n "$2" ] ;then
-   do_date=$2
-else 
-   do_date=`date -d '-1 day' +%F`
-fi
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source ${SCRIPT_DIR}/../common/env.sh
+source ${SCRIPT_DIR}/../common/date_util.sh
+source ${SCRIPT_DIR}/../common/hive_util.sh
 
-load_data(){
-    sql=""
-    for i in $*; do
-        #判断路径是否存在
-        hadoop fs -test -e /origin_data/$APP/db/${i:4}/$do_date
-        #路径存在方可装载数据
-        if [[ $? = 0 ]]; then
-            sql=$sql"load data inpath '/origin_data/$APP/db/${i:4}/$do_date' OVERWRITE into table ${APP}.$i partition(dt='$do_date');"
-        fi
-    done
-    hive -e "$sql"
-}
+DO_DATE=$(get_do_date "$1")
 
-case $1 in
-    "ods_activity_info_full")
-        load_data "ods_activity_info_full"
-    ;;
-    "ods_activity_rule_full")
-        load_data "ods_activity_rule_full"
-    ;;
-    "ods_base_category1_full")
-        load_data "ods_base_category1_full"
-    ;;
-    "ods_base_category2_full")
-        load_data "ods_base_category2_full"
-    ;;
-    "ods_base_category3_full")
-        load_data "ods_base_category3_full"
-    ;;
-    "ods_base_dic_full")
-        load_data "ods_base_dic_full"
-    ;;
-    "ods_base_province_full")
-        load_data "ods_base_province_full"
-    ;;
-    "ods_base_region_full")
-        load_data "ods_base_region_full"
-    ;;
-    "ods_base_trademark_full")
-        load_data "ods_base_trademark_full"
-    ;;
-    "ods_cart_info_full")
-        load_data "ods_cart_info_full"
-    ;;
-    "ods_coupon_info_full")
-        load_data "ods_coupon_info_full"
-    ;;
-    "ods_sku_attr_value_full")
-        load_data "ods_sku_attr_value_full"
-    ;;
-    "ods_sku_info_full")
-        load_data "ods_sku_info_full"
-    ;;
-    "ods_sku_sale_attr_value_full")
-        load_data "ods_sku_sale_attr_value_full"
-    ;;
-    "ods_spu_info_full")
-        load_data "ods_spu_info_full"
-    ;;
-    "ods_promotion_pos_full")
-        load_data "ods_promotion_pos_full"
-    ;;
-    "ods_promotion_refer_full")
-        load_data "ods_promotion_refer_full"
-    ;;
+echo "============================================"
+echo " ODS 层装载：业务数据"
+echo " 日期: ${DO_DATE}"
+echo "============================================"
 
-    "ods_cart_info_inc")
-        load_data "ods_cart_info_inc"
-    ;;
-    "ods_comment_info_inc")
-        load_data "ods_comment_info_inc"
-    ;;
-    "ods_coupon_use_inc")
-        load_data "ods_coupon_use_inc"
-    ;;
-    "ods_favor_info_inc")
-        load_data "ods_favor_info_inc"
-    ;;
-    "ods_order_detail_inc")
-        load_data "ods_order_detail_inc"
-    ;;
-    "ods_order_detail_activity_inc")
-        load_data "ods_order_detail_activity_inc"
-    ;;
-    "ods_order_detail_coupon_inc")
-        load_data "ods_order_detail_coupon_inc"
-    ;;
-    "ods_order_info_inc")
-        load_data "ods_order_info_inc"
-    ;;
-    "ods_order_refund_info_inc")
-        load_data "ods_order_refund_info_inc"
-    ;;
-    "ods_order_status_log_inc")
-        load_data "ods_order_status_log_inc"
-    ;;
-    "ods_payment_info_inc")
-        load_data "ods_payment_info_inc"
-    ;;
-    "ods_refund_payment_inc")
-        load_data "ods_refund_payment_inc"
-    ;;
-    "ods_user_info_inc")
-        load_data "ods_user_info_inc"
-    ;;
-    "all")
-        load_data "ods_activity_info_full" "ods_activity_rule_full" "ods_base_category1_full" "ods_base_category2_full" "ods_base_category3_full" "ods_base_dic_full" "ods_base_province_full" "ods_base_region_full" "ods_base_trademark_full" "ods_cart_info_full" "ods_coupon_info_full" "ods_sku_attr_value_full" "ods_sku_info_full" "ods_sku_sale_attr_value_full" "ods_spu_info_full" "ods_promotion_pos_full" "ods_promotion_refer_full" "ods_cart_info_inc" "ods_comment_info_inc" "ods_coupon_use_inc" "ods_favor_info_inc" "ods_order_detail_inc" "ods_order_detail_activity_inc" "ods_order_detail_coupon_inc" "ods_order_info_inc" "ods_order_refund_info_inc" "ods_order_status_log_inc" "ods_payment_info_inc" "ods_refund_payment_inc" "ods_user_info_inc"
-    ;;
-esac
+SQL_FILE="${SCRIPT_DIR}/../../sql/ods/load/ods_db_load.sql"
+
+execute_hive_sql "$SQL_FILE" "$DO_DATE"
+
+echo "[INFO] ODS 层业务数据装载完成"

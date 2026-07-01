@@ -5,139 +5,350 @@
 -- ===================================================
 
 -- ----------------------------
--- 订单信息增量表
+-- 购物车表（增量表）
 -- ----------------------------
-DROP TABLE IF EXISTS gmall.ods_order_info_inc;
-CREATE EXTERNAL TABLE gmall.ods_order_info_inc
+DROP TABLE IF EXISTS gmall.ods_cart_info_inc;
+CREATE EXTERNAL TABLE gmall.ods_cart_info_inc
 (
-    `type` STRING COMMENT '变更类型：insert/update/delete',
-    `ts`   STRING COMMENT '变更时间戳（10位秒级→补充为13位）',
-    `data` STRUCT<
-        id:STRING,
-        consignee:STRING,
-        consignee_tel:STRING,
-        total_amount:STRING,
-        order_status:STRING,
-        user_id:STRING,
-        payment_way:STRING,
-        delivery_address:STRING,
-        order_comment:STRING,
-        out_trade_no:STRING,
-        trade_body:STRING,
-        create_time:STRING,
-        operate_time:STRING,
-        expire_time:STRING,
-        process_status:STRING,
-        tracking_no:STRING,
-        parent_order_id:STRING,
-        img_url:STRING,
-        province_id:STRING,
-        activity_reduce_amount:STRING,
-        coupon_reduce_amount:STRING,
-        original_total_amount:STRING,
-        feight_fee:STRING,
-        feight_fee_reduce:STRING,
-        refundable_time:STRING
-    > COMMENT '数据内容',
-    `old`  MAP<STRING,STRING> COMMENT '变更前数据（仅 update 类型包含）'
-)
-COMMENT '订单信息增量表'
-PARTITIONED BY (`dt` STRING)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-STORED AS TEXTFILE
-TBLPROPERTIES ('compression'='gzip');
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        user_id :STRING,
+        sku_id :STRING,
+        cart_price :DECIMAL(16, 2),
+        sku_num :BIGINT,
+        img_url :STRING,
+        sku_name :STRING,
+        is_checked :STRING,
+        create_time :STRING,
+        operate_time :STRING,
+        is_ordered :STRING,
+        order_time:STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '购物车增量表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_cart_info_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
 
 -- ----------------------------
--- 订单明细增量表
+-- 评论表（增量表）
+-- ----------------------------
+DROP TABLE IF EXISTS gmall.ods_comment_info_inc;
+CREATE EXTERNAL TABLE gmall.ods_comment_info_inc
+(
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        user_id :STRING,
+        nick_name :STRING,
+        head_img :STRING,
+        sku_id :STRING,
+        spu_id :STRING,
+        order_id :STRING,
+        appraise :STRING,
+        comment_txt :STRING,
+        create_time :STRING,
+        operate_time :STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '评论表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_comment_info_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
+
+-- ----------------------------
+-- 优惠券领用表（增量表）
+-- ----------------------------
+DROP TABLE IF EXISTS gmall.ods_coupon_use_inc;
+CREATE EXTERNAL TABLE gmall.ods_coupon_use_inc
+(
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        coupon_id :STRING,
+        user_id :STRING,
+        order_id :STRING,
+        coupon_status :STRING,
+        get_time :STRING,
+        using_time:STRING,
+        used_time :STRING,expire_time :STRING,
+        create_time :STRING,
+        operate_time :STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '优惠券领用表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_coupon_use_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
+
+-- ----------------------------
+-- 收藏表（增量表）
+-- ----------------------------
+DROP TABLE IF EXISTS gmall.ods_favor_info_inc;
+CREATE EXTERNAL TABLE gmall.ods_favor_info_inc
+(
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        user_id :STRING,
+        sku_id :STRING,
+        spu_id :STRING,
+        is_cancel :STRING,
+        create_time :STRING,
+        operate_time:STRING> COMMENT '数据',
+    `old`  MAP<STRING,
+    STRING> COMMENT '旧值'
+) COMMENT '收藏表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_favor_info_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
+
+-- ----------------------------
+-- 订单明细表（增量表）
 -- ----------------------------
 DROP TABLE IF EXISTS gmall.ods_order_detail_inc;
 CREATE EXTERNAL TABLE gmall.ods_order_detail_inc
 (
-    `type` STRING COMMENT '变更类型',
-    `ts`   STRING COMMENT '变更时间戳',
-    `data` STRUCT<
-        id:STRING,
-        order_id:STRING,
-        sku_id:STRING,
-        sku_name:STRING,
-        img_url:STRING,
-        order_price:STRING,
-        sku_num:STRING,
-        create_time:STRING,
-        source_type:STRING,
-        source_id:STRING,
-        split_total_amount:STRING,
-        split_activity_amount:STRING,
-        split_coupon_amount:STRING,
-        operate_time:STRING
-    > COMMENT '数据内容',
-    `old`  MAP<STRING,STRING> COMMENT '变更前数据'
-)
-COMMENT '订单明细增量表'
-PARTITIONED BY (`dt` STRING)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-STORED AS TEXTFILE
-TBLPROPERTIES ('compression'='gzip');
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        order_id :STRING,
+        sku_id :STRING,
+        sku_name :STRING,
+        img_url :STRING,
+        order_price:DECIMAL(16, 2),
+        sku_num :BIGINT,
+        create_time :STRING,
+        source_type :STRING,
+        source_id :STRING,
+        split_total_amount:DECIMAL(16, 2),
+        split_activity_amount :DECIMAL(16, 2),
+        split_coupon_amount:DECIMAL(16, 2),
+        operate_time :STRING> COMMENT '数据',
+    `old`  MAP<STRING,
+    STRING> COMMENT '旧值'
+) COMMENT '订单明细表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_order_detail_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
 
 -- ----------------------------
--- 支付信息增量表
+-- 订单明细活动关联表（增量表）
+-- ----------------------------
+DROP TABLE IF EXISTS gmall.ods_order_detail_activity_inc;
+CREATE EXTERNAL TABLE gmall.ods_order_detail_activity_inc
+(
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        order_id :STRING,
+        order_detail_id :STRING,
+        activity_id :STRING,
+        activity_rule_id :STRING,
+        sku_id:STRING,
+        create_time :STRING,
+        operate_time :STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '订单明细活动关联表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_order_detail_activity_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
+
+-- ----------------------------
+-- 订单明细优惠券关联表（增量表）
+-- ----------------------------
+DROP TABLE IF EXISTS gmall.ods_order_detail_coupon_inc;
+CREATE EXTERNAL TABLE gmall.ods_order_detail_coupon_inc
+(
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        order_id :STRING,
+        order_detail_id :STRING,
+        coupon_id :STRING,
+        coupon_use_id :STRING,
+        sku_id:STRING,
+        create_time :STRING,
+        operate_time :STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '订单明细优惠券关联表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_order_detail_coupon_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
+
+-- ----------------------------
+-- 订单表（增量表）
+-- ----------------------------
+DROP TABLE IF EXISTS gmall.ods_order_info_inc;
+CREATE EXTERNAL TABLE gmall.ods_order_info_inc
+(
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        consignee :STRING,
+        consignee_tel :STRING,
+        total_amount :DECIMAL(16, 2),
+        order_status :STRING,
+        user_id:STRING,
+        payment_way :STRING,
+        delivery_address :STRING,
+        order_comment :STRING,
+        out_trade_no :STRING,
+        trade_body:STRING,
+        create_time :STRING,
+        operate_time :STRING,
+        expire_time :STRING,
+        process_status :STRING,
+        tracking_no:STRING,
+        parent_order_id :STRING,
+        img_url :STRING,
+        province_id :STRING,
+        activity_reduce_amount:DECIMAL(16, 2),
+        coupon_reduce_amount :DECIMAL(16, 2),
+        original_total_amount :DECIMAL(16, 2),
+        freight_fee:DECIMAL(16, 2),
+        freight_fee_reduce :DECIMAL(16, 2),
+        refundable_time :DECIMAL(16, 2)> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '订单表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_order_info_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
+
+-- ----------------------------
+-- 退单表（增量表）
+-- ----------------------------
+DROP TABLE IF EXISTS gmall.ods_order_refund_info_inc;
+CREATE EXTERNAL TABLE gmall.ods_order_refund_info_inc
+(
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        user_id :STRING,
+        order_id :STRING,
+        sku_id :STRING,
+        refund_type :STRING,
+        refund_num :BIGINT,
+        refund_amount:DECIMAL(16, 2),
+        refund_reason_type :STRING,
+        refund_reason_txt :STRING,
+        refund_status :STRING,
+        create_time:STRING,
+        operate_time :STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '退单表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_order_refund_info_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
+
+-- ----------------------------
+-- 订单状态流水表（增量表）
+-- ----------------------------
+DROP TABLE IF EXISTS gmall.ods_order_status_log_inc;
+CREATE EXTERNAL TABLE gmall.ods_order_status_log_inc
+(
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        order_id :STRING,
+        order_status :STRING,
+        create_time :STRING,
+        operate_time :STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '订单状态流水表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_order_status_log_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
+
+-- ----------------------------
+-- 支付表（增量表）
 -- ----------------------------
 DROP TABLE IF EXISTS gmall.ods_payment_info_inc;
 CREATE EXTERNAL TABLE gmall.ods_payment_info_inc
 (
-    `type` STRING COMMENT '变更类型',
-    `ts`   STRING COMMENT '变更时间戳',
-    `data` STRUCT<
-        id:STRING,
-        out_trade_no:STRING,
-        order_id:STRING,
-        user_id:STRING,
-        payment_type:STRING,
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        out_trade_no :STRING,
+        order_id :STRING,
+        user_id :STRING,
+        payment_type :STRING,
         trade_no:STRING,
-        total_amount:STRING,
-        subject:STRING,
-        payment_status:STRING,
-        create_time:STRING,
+        total_amount :DECIMAL(16, 2),
+        subject :STRING,
+        payment_status :STRING,
+        create_time :STRING,
         callback_time:STRING,
-        callback_content:STRING,
-        operate_time:STRING
-    > COMMENT '数据内容',
-    `old`  MAP<STRING,STRING> COMMENT '变更前数据'
-)
-COMMENT '支付信息增量表'
-PARTITIONED BY (`dt` STRING)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-STORED AS TEXTFILE
-TBLPROPERTIES ('compression'='gzip');
+        callback_content :STRING,
+        operate_time :STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '支付表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_payment_info_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
 
 -- ----------------------------
--- 用户信息增量表
+-- 退款表（增量表）
+-- ----------------------------
+DROP TABLE IF EXISTS gmall.ods_refund_payment_inc;
+CREATE EXTERNAL TABLE gmall.ods_refund_payment_inc
+(
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        out_trade_no :STRING,
+        order_id :STRING,
+        sku_id :STRING,
+        payment_type :STRING,
+        trade_no :STRING,
+        total_amount:DECIMAL(16, 2),
+        subject :STRING,
+        refund_status :STRING,
+        create_time :STRING,
+        callback_time :STRING,
+        callback_content:STRING,
+        operate_time :STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '退款表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_refund_payment_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');
+
+-- ----------------------------
+-- 用户表（增量表）
 -- ----------------------------
 DROP TABLE IF EXISTS gmall.ods_user_info_inc;
 CREATE EXTERNAL TABLE gmall.ods_user_info_inc
 (
-    `type` STRING COMMENT '变更类型',
-    `ts`   STRING COMMENT '变更时间戳',
-    `data` STRUCT<
-        id:STRING,
-        login_name:STRING,
-        nick_name:STRING,
-        passwd:STRING,
-        name:STRING,
-        phone_num:STRING,
+    `type` STRING COMMENT '变动类型',
+    `ts`   BIGINT COMMENT '变动时间',
+    `data` STRUCT<id :STRING,
+        login_name :STRING,
+        nick_name :STRING,
+        passwd :STRING,
+        name :STRING,
+        phone_num :STRING,
         email:STRING,
-        head_img:STRING,
-        user_level:STRING,
-        birthday:STRING,
-        gender:STRING,
-        create_time:STRING,
+        head_img :STRING,
+        user_level :STRING,
+        birthday :STRING,
+        gender :STRING,
+        create_time :STRING,
         operate_time:STRING,
-        status:STRING
-    > COMMENT '数据内容',
-    `old`  MAP<STRING,STRING> COMMENT '变更前数据'
-)
-COMMENT '用户信息增量表'
-PARTITIONED BY (`dt` STRING)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-STORED AS TEXTFILE
-TBLPROPERTIES ('compression'='gzip');
+        status :STRING> COMMENT '数据',
+    `old`  MAP<STRING,STRING> COMMENT '旧值'
+) COMMENT '用户表'
+    PARTITIONED BY (`dt` STRING)
+    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
+LOCATION '/warehouse/gmall/ods/ods_user_info_inc/'
+TBLPROPERTIES ('compression.codec'='org.apache.hadoop.io.compress.GzipCodec');

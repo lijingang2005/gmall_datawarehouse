@@ -20,26 +20,63 @@ echo " DWS nd 层计算：DWS 1d → DWS nd"
 echo " 日期: ${DO_DATE}"
 echo "============================================"
 
-# 执行 N 日汇总 HQL（可拆分为独立 SQL 文件）
+# 此处执行 N 日窗口计算（7 日和 30 日汇总）
+
 ${HIVE_HOME}/bin/hive --hiveconf do_date="${DO_DATE}" << EOF
 
 USE ${HIVE_DB};
 
--- ==================== 流量域 N 日汇总 ====================
-
--- ==================== 交易域：品牌粒度 7/30 日汇总 ====================
-INSERT OVERWRITE TABLE dws_trade_order_tm_nd PARTITION (dt = '${DO_DATE}')
+-- ==================== 交易域：用户商品粒度 7/30 日汇总 ====================
+INSERT OVERWRITE TABLE dws_trade_user_sku_order_nd PARTITION (dt = '${DO_DATE}')
 SELECT
+    user_id,
+    sku_id,
+    sku_name,
+    category1_id,
+    category1_name,
+    category2_id,
+    category2_name,
+    category3_id,
+    category3_name,
     tm_id,
     tm_name,
-    COUNT(DISTINCT order_id)           AS order_count,
-    COUNT(DISTINCT user_id)            AS user_count,
-    SUM(split_total_amount)            AS order_amount
-FROM dws_trade_order_1d
-WHERE dt >= DATE_SUB('${DO_DATE}', 6)   -- 最近 7 天
-  AND dt <= '${DO_DATE}'
-  AND tm_id IS NOT NULL
-GROUP BY tm_id, tm_name;
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), order_count_1d, 0)) order_count_7d,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), order_num_1d, 0)) order_num_7d,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), order_original_amount_1d, 0)) order_original_amount_7d,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), activity_reduce_amount_1d, 0)) activity_reduce_amount_7d,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), coupon_reduce_amount_1d, 0)) coupon_reduce_amount_7d,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), order_total_amount_1d, 0)) order_total_amount_7d,
+    sum(order_count_1d) order_count_30d,
+    sum(order_num_1d) order_num_30d,
+    sum(order_original_amount_1d) order_original_amount_30d,
+    sum(activity_reduce_amount_1d) activity_reduce_amount_30d,
+    sum(coupon_reduce_amount_1d) coupon_reduce_amount_30d,
+    sum(order_total_amount_1d) order_total_amount_30d
+FROM dws_trade_user_sku_order_1d
+WHERE dt >= date_sub('${DO_DATE}', 29) AND dt <= '${DO_DATE}'
+GROUP BY user_id, sku_id, sku_name, category1_id, category1_name, category2_id, category2_name, category3_id, category3_name, tm_id, tm_name;
+
+-- ==================== 交易域：省份粒度 7/30 日汇总 ====================
+INSERT OVERWRITE TABLE dws_trade_province_order_nd PARTITION (dt = '${DO_DATE}')
+SELECT
+    province_id,
+    province_name,
+    area_code,
+    iso_code,
+    iso_3166_2,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), order_count_1d, 0)) order_count_7d,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), order_original_amount_1d, 0)) order_original_amount_7d,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), activity_reduce_amount_1d, 0)) activity_reduce_amount_7d,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), coupon_reduce_amount_1d, 0)) coupon_reduce_amount_7d,
+    sum(IF(dt >= date_sub('${DO_DATE}', 6), order_total_amount_1d, 0)) order_total_amount_7d,
+    sum(order_count_1d) order_count_30d,
+    sum(order_original_amount_1d) order_original_amount_30d,
+    sum(activity_reduce_amount_1d) activity_reduce_amount_30d,
+    sum(coupon_reduce_amount_1d) coupon_reduce_amount_30d,
+    sum(order_total_amount_1d) order_total_amount_30d
+FROM dws_trade_province_order_1d
+WHERE dt >= date_sub('${DO_DATE}', 29) AND dt <= '${DO_DATE}'
+GROUP BY province_id, province_name, area_code, iso_code, iso_3166_2;
 
 EOF
 

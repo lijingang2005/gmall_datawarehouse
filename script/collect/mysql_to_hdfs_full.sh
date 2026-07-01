@@ -11,9 +11,10 @@
 
 set -e
 
-source $(dirname $0)/../common/env.sh
-source $(dirname $0)/../common/date_util.sh
-source $(dirname $0)/../common/hdfs_util.sh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source ${SCRIPT_DIR}/../common/env.sh
+source ${SCRIPT_DIR}/../common/date_util.sh
+source ${SCRIPT_DIR}/../common/hdfs_util.sh
 
 DATAX_HOME="${DATAX_HOME:-/opt/module/datax}"
 DATAX_JOB_DIR="/opt/module/datax/job/import"

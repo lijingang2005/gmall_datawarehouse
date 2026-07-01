@@ -30,6 +30,10 @@
 
 ### 1.2 采集流程
 
+![Data Collection Flow](../images/data_collection_flow.png)
+
+**用户行为日志采集详细流程：**
+
 ```
 日志文件 (app.log)
     │
@@ -91,29 +95,12 @@ MySQL 中模拟的 GMall 电商业务数据包含 34 张表，按变更频率分
 - activity_info, activity_rule, base_category1/2/3, base_dic, base_province, base_region, base_trademark, coupon_info, sku_attr_value, sku_info, sku_sale_attr_value, spu_info, promotion_pos, promotion_refer
 
 **事实/状态表（增量同步）**：数据量大、变化频繁，增量采集
-- cart_info, comment_info, coupon_use, favor_info, order_detail, order_detail_activity, order_detail_coupon, order_info, order_refund_info, order_status_log, payment_info, refund_payment, user_info
+- comment_info, coupon_use, favor_info, order_detail, order_detail_activity, order_detail_coupon, order_info, order_refund_info, order_status_log, payment_info, refund_payment, user_info
+- cart_info（特殊：同时拥有全量与增量两张 ODS 表）
 
 ### 2.2 增量采集流程（Maxwell）
 
-```
-MySQL Binlog
-    │
-    ▼
-Maxwell (伪装为 MySQL Slave)
-    │  实时解析 Binlog 变更记录
-    │  转换为 JSON 格式
-    ▼
-Kafka (topic_db)
-    │  JSON 格式: {"database":"gmall","table":"order_info","type":"insert","ts":...,"data":{...}}
-    ▼
-Flume (Kafka Source + TimestampAndTableNameInterceptor)
-    │  · 提取 ts 时间戳（解决零点漂移）
-    │  · 提取 table 表名（用于动态路由到不同目录）
-    ▼
-HDFS (/origin_data/gmall/db/{tableName}_inc/%Y-%m-%d)
-    · 按表名 + 日期分区
-    · gzip 压缩
-```
+Maxwell 增量采集通道如下：
 
 ### 2.3 Maxwell 原理
 
@@ -125,20 +112,7 @@ Maxwell 通过**伪装成 MySQL Slave**，读取主库的 Binary Log，将数据
 
 ### 2.4 全量同步流程（DataX）
 
-```
-MySQL (配置维度表)
-    │
-    ▼
-DataX (mysqlreader + hdfswriter)
-    │  · 通过 SQL 查询全表数据
-    │  · 支持日期参数 -Ddt 动态分区
-    │  · 自动生成 17 张表的 JSON 配置
-    ▼
-HDFS (/origin_data/gmall/db/{table}_full/$dt)
-    · 按日期分区
-    · \t 分隔符
-    · gzip 压缩
-```
+DataX 全量同步适用于配置维度表，将 MySQL 中的 17 张表通过 SQL 查询全表数据后写入 HDFS，支持日期参数 `-Ddt` 动态分区。数据以 `\t` 分隔、gzip 压缩，按日期分区存储。
 
 ### 2.5 数据同步策略
 

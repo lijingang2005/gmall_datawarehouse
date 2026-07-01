@@ -8,6 +8,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source ${SCRIPT_DIR}/../common/env.sh
 source ${SCRIPT_DIR}/../common/date_util.sh
 
 DO_DATE=$(get_do_date "$1")
@@ -18,9 +19,9 @@ echo " 日期: ${DO_DATE}"
 echo "============================================"
 
 # 日志 ODS
-bash ${SCRIPT_DIR}/../collect/hdfs_to_ods_log.sh ${DO_DATE}
+bash ${SCRIPT_DIR}/hdfs_to_ods_log.sh ${DO_DATE}
 
 # 业务 ODS
-bash ${SCRIPT_DIR}/../collect/hdfs_to_ods_db.sh ${DO_DATE}
+bash ${SCRIPT_DIR}/hdfs_to_ods_db.sh ${DO_DATE}
 
 echo "[INFO] ODS 层全部装载完成"

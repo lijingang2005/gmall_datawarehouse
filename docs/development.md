@@ -25,9 +25,9 @@
 | 层级 | 前缀 | 示例 |
 |------|------|------|
 | ODS | `ods_` | `ods_order_info_full`, `ods_log_inc` |
-| DIM | `dim_` | `dim_user`, `dim_sku` |
-| DWD | `dwd_` | `dwd_trade_order_detail_inc` |
-| DWS | `dws_` | `dws_trade_order_1d`, `dws_traffic_page_view_nd` |
+| DIM | `dim_` | `dim_user_zip`, `dim_sku_full`, `dim_coupon_full` |
+| DWD | `dwd_` | `dwd_trade_order_detail_inc`, `dwd_traffic_page_view_inc` |
+| DWS | `dws_` | `dws_trade_user_sku_order_1d`, `dws_trade_user_sku_order_nd` |
 | ADS | `ads_` | `ads_traffic_stats_by_channel` |
 
 **周期标识**：
@@ -71,7 +71,7 @@ FROM (
     WHERE dt = '2022-06-08'
     GROUP BY user_id
 ) t1
-LEFT JOIN gmall.dim_user t2
+LEFT JOIN gmall.dim_user_zip t2
     ON t1.user_id = t2.id
    AND t2.end_date = '9999-12-31'  -- 拉链表取当前有效记录
 ;
@@ -92,9 +92,9 @@ CREATE EXTERNAL TABLE gmall.dwd_xxx
 )
 COMMENT '表说明'
 PARTITIONED BY (`dt` STRING)       -- 按日分区
-STORED AS PARQUET                  -- 列式存储
+STORED AS ORC                     -- 列式存储
 LOCATION '/warehouse/gmall/dwd/dwd_xxx/'
-TBLPROPERTIES ('parquet.compression'='snappy');
+TBLPROPERTIES ('orc.compress'='snappy');
 ```
 
 ### 2.3 分区规范
@@ -108,10 +108,10 @@ TBLPROPERTIES ('parquet.compression'='snappy');
 | 层 | 存储格式 | 压缩 |
 |----|----------|------|
 | ODS | TEXTFILE | gzip |
-| DIM | PARQUET | snappy |
-| DWD | PARQUET | snappy |
-| DWS | PARQUET | snappy |
-| ADS | PARQUET | snappy |
+| DIM | ORC | snappy |
+| DWD | ORC | snappy |
+| DWS | ORC | snappy |
+| ADS | ORC | snappy |
 
 ---
 

@@ -29,7 +29,7 @@ EXPORT_CONFIG_DIR="/opt/module/datax/job/export"
 # -------------------------------------------------
 export_table() {
     local table_name="$1"
-    local config_file="${EXPORT_CONFIG_DIR}/gmall.${table_name}.json"
+    local config_file="${EXPORT_CONFIG_DIR}/gmall_report.${table_name}.json"
 
     if [ ! -f "$config_file" ]; then
         echo "[WARN] DataX 配置文件不存在，跳过: $config_file"
@@ -59,6 +59,12 @@ ADS_TABLES=(
     "ads_order_continuously_user_count"
     "ads_repeat_purchase_by_tm"
     "ads_order_stats_by_tm"
+    "ads_order_stats_by_cate"
+    "ads_order_by_province"
+    "ads_coupon_stats"
+    "ads_sku_cart_num_top3_by_cate"
+    "ads_sku_favor_count_top3_by_tm"
+    "ads_order_to_pay_interval_avg"
 )
 
 for table in "${ADS_TABLES[@]}"; do

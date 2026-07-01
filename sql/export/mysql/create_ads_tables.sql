@@ -145,7 +145,105 @@ CREATE TABLE `ads_order_stats_by_tm` (
     `tm_id`       VARCHAR(16) NOT NULL COMMENT '品牌ID',
     `tm_name`     VARCHAR(32) DEFAULT NULL COMMENT '品牌名称',
     `order_count` BIGINT(20) DEFAULT NULL COMMENT '订单数',
-    `order_amount` DECIMAL(16,2) DEFAULT NULL COMMENT '订单金额',
+    `order_user_count` BIGINT(20) DEFAULT NULL COMMENT '下单人数',
     PRIMARY KEY (`dt`, `recent_days`, `tm_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci
 COMMENT='各品牌交易统计';
+
+-- ----------------------------
+-- 各品类商品下单统计
+-- ----------------------------
+DROP TABLE IF EXISTS `ads_order_stats_by_cate`;
+CREATE TABLE `ads_order_stats_by_cate` (
+    `dt`               DATE NOT NULL COMMENT '统计日期',
+    `recent_days`      BIGINT(20) NOT NULL COMMENT '最近天数:1/7/30',
+    `category1_id`     VARCHAR(16) DEFAULT NULL COMMENT '一级品类ID',
+    `category1_name`   VARCHAR(32) DEFAULT NULL COMMENT '一级品类名称',
+    `category2_id`     VARCHAR(16) DEFAULT NULL COMMENT '二级品类ID',
+    `category2_name`   VARCHAR(32) DEFAULT NULL COMMENT '二级品类名称',
+    `category3_id`     VARCHAR(16) DEFAULT NULL COMMENT '三级品类ID',
+    `category3_name`   VARCHAR(32) DEFAULT NULL COMMENT '三级品类名称',
+    `order_count`      BIGINT(20) DEFAULT NULL COMMENT '下单数',
+    `order_user_count` BIGINT(20) DEFAULT NULL COMMENT '下单人数',
+    PRIMARY KEY (`dt`, `recent_days`, `category3_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci
+COMMENT='各品类商品下单统计';
+
+-- ----------------------------
+-- 各省份交易统计
+-- ----------------------------
+DROP TABLE IF EXISTS `ads_order_by_province`;
+CREATE TABLE `ads_order_by_province` (
+    `dt`                 DATE NOT NULL COMMENT '统计日期',
+    `recent_days`        BIGINT(20) NOT NULL COMMENT '最近天数:1/7/30',
+    `province_id`        VARCHAR(16) NOT NULL COMMENT '省份ID',
+    `province_name`      VARCHAR(32) DEFAULT NULL COMMENT '省份名称',
+    `area_code`          VARCHAR(16) DEFAULT NULL COMMENT '地区编码',
+    `iso_code`           VARCHAR(16) DEFAULT NULL COMMENT 'ISO编码',
+    `iso_code_3166_2`    VARCHAR(16) DEFAULT NULL COMMENT '新版ISO编码',
+    `order_count`        BIGINT(20) DEFAULT NULL COMMENT '订单数',
+    `order_total_amount` DECIMAL(16,2) DEFAULT NULL COMMENT '订单金额',
+    PRIMARY KEY (`dt`, `recent_days`, `province_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci
+COMMENT='各省份交易统计';
+
+-- ----------------------------
+-- 优惠券使用统计
+-- ----------------------------
+DROP TABLE IF EXISTS `ads_coupon_stats`;
+CREATE TABLE `ads_coupon_stats` (
+    `dt`              DATE NOT NULL COMMENT '统计日期',
+    `coupon_id`       VARCHAR(16) NOT NULL COMMENT '优惠券ID',
+    `coupon_name`     VARCHAR(64) DEFAULT NULL COMMENT '优惠券名称',
+    `used_count`      BIGINT(20) DEFAULT NULL COMMENT '使用次数',
+    `used_user_count` BIGINT(20) DEFAULT NULL COMMENT '使用人数',
+    PRIMARY KEY (`dt`, `coupon_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci
+COMMENT='优惠券使用统计';
+
+-- ----------------------------
+-- 各品类商品购物车存量Top3
+-- ----------------------------
+DROP TABLE IF EXISTS `ads_sku_cart_num_top3_by_cate`;
+CREATE TABLE `ads_sku_cart_num_top3_by_cate` (
+    `dt`             DATE NOT NULL COMMENT '统计日期',
+    `category1_id`   VARCHAR(16) DEFAULT NULL COMMENT '一级品类ID',
+    `category1_name` VARCHAR(32) DEFAULT NULL COMMENT '一级品类名称',
+    `category2_id`   VARCHAR(16) DEFAULT NULL COMMENT '二级品类ID',
+    `category2_name` VARCHAR(32) DEFAULT NULL COMMENT '二级品类名称',
+    `category3_id`   VARCHAR(16) DEFAULT NULL COMMENT '三级品类ID',
+    `category3_name` VARCHAR(32) DEFAULT NULL COMMENT '三级品类名称',
+    `sku_id`         VARCHAR(16) NOT NULL COMMENT 'SKU_ID',
+    `sku_name`       VARCHAR(128) DEFAULT NULL COMMENT 'SKU名称',
+    `cart_num`       BIGINT(20) DEFAULT NULL COMMENT '购物车中商品数量',
+    `rk`             BIGINT(20) NOT NULL COMMENT '排名',
+    PRIMARY KEY (`dt`, `category3_id`, `rk`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci
+COMMENT='各品类商品购物车存量Top3';
+
+-- ----------------------------
+-- 各品牌商品收藏次数Top3
+-- ----------------------------
+DROP TABLE IF EXISTS `ads_sku_favor_count_top3_by_tm`;
+CREATE TABLE `ads_sku_favor_count_top3_by_tm` (
+    `dt`          DATE NOT NULL COMMENT '统计日期',
+    `tm_id`       VARCHAR(16) NOT NULL COMMENT '品牌ID',
+    `tm_name`     VARCHAR(32) DEFAULT NULL COMMENT '品牌名称',
+    `sku_id`      VARCHAR(16) NOT NULL COMMENT 'SKU_ID',
+    `sku_name`    VARCHAR(128) DEFAULT NULL COMMENT 'SKU名称',
+    `favor_count` BIGINT(20) DEFAULT NULL COMMENT '被收藏次数',
+    `rk`          BIGINT(20) NOT NULL COMMENT '排名',
+    PRIMARY KEY (`dt`, `tm_id`, `rk`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci
+COMMENT='各品牌商品收藏次数Top3';
+
+-- ----------------------------
+-- 下单到支付时间间隔平均值
+-- ----------------------------
+DROP TABLE IF EXISTS `ads_order_to_pay_interval_avg`;
+CREATE TABLE `ads_order_to_pay_interval_avg` (
+    `dt`                        DATE NOT NULL COMMENT '统计日期',
+    `order_to_pay_interval_avg` BIGINT(20) DEFAULT NULL COMMENT '下单到支付时间间隔平均值(秒)',
+    PRIMARY KEY (`dt`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci
+COMMENT='下单到支付时间间隔平均值统计';
